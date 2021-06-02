@@ -62,13 +62,17 @@ def create_card_number():
     card_number.append(a)
     card_number = int("".join(map(str, card_number)))
     return card_number
+
+
 # after all tasks: insert or update, print
 
 # create first account
 fa = Account(123456, 9876)
+fa.card_number = create_card_number()
 
 # create second account
 sa = Account(654321, 1234)
+sa.card_number = create_card_number()
 
 # income to fa 1000
 fa.income(1000)
@@ -79,5 +83,3 @@ fa.output(500)
 sa.income(500)
 fa.print(True)
 sa.print(True)
-
-
