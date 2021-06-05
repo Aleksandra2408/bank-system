@@ -31,6 +31,12 @@ class Account:
         else:
             return False
 
+    def delete(self, card_number, conn):
+        if self.card_number == card_number:
+            del self
+        cursor.execute('DELETE FROM card WHERE number =' + str(self.card_number))
+        conn.commit()
+
     def print(self, print_balance=False):
         print('')
         print('Your card number:')
@@ -41,6 +47,8 @@ class Account:
             print('Your balance:')
             print(self.balance)
         print('')
+
+
 
 
 def create_card_number():
@@ -83,3 +91,7 @@ fa.output(500)
 sa.income(500)
 fa.print(True)
 sa.print(True)
+
+# основной код
+conn = sqlite3.connect('card.s3db')
+cursor = conn.cursor()
