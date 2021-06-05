@@ -37,7 +37,6 @@ class Account:
         if self.card_number == card_number:
             del self
 
-
     def print(self, print_balance=False):
         print('')
         print('Your card number:')
