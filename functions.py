@@ -32,10 +32,11 @@ class Account:
             return False
 
     def delete(self, card_number, conn):
-        if self.card_number == card_number:
-            del self
         cursor.execute('DELETE FROM card WHERE number =' + str(self.card_number))
         conn.commit()
+        if self.card_number == card_number:
+            del self
+
 
     def print(self, print_balance=False):
         print('')
@@ -49,6 +50,12 @@ class Account:
         print('')
 
 
+def welcome():
+    print('1. Create an account')
+    print('2. Log into account')
+    print('0. Exit')
+    answer = int(input())
+    return answer
 
 
 def create_card_number():
@@ -70,6 +77,18 @@ def create_card_number():
     card_number.append(a)
     card_number = int("".join(map(str, card_number)))
     return card_number
+
+
+def account_menu():
+    print('')
+    print('1. Balance')
+    print('2. Add income')
+    print('3. Do transfer')
+    print('4. Close account')
+    print('5. Log out')
+    print('0. Exit')
+    selected_item = int(input())
+    return selected_item
 
 
 # after all tasks: insert or update, print
