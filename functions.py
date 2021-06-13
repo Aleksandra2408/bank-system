@@ -15,14 +15,8 @@ class Account:
     def income(self, transfer):
         self.balance = self.balance + transfer
 
-    def insert(self, conn):
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO card (number, pin, balance) VALUES (' + str(self.card_number) + ', ' + str(self.pin) + ', ' + str(self.balance) + ')')
-        conn.commit()
-
-    def update(self, conn):
-        cursor = conn.cursor()
-        cursor.execute('UPDATE card SET balance = ' + str(self.balance) + ' WHERE number =' + str(self.card_number))
+    def insert(self, conn, card_number):
+        cursor.execute('UPDATE card SET balance = ' + str(self.balance) + ' WHERE number =' + str(card_number))
         conn.commit()
 
     def data_check(self, card_number, pin):
@@ -36,6 +30,10 @@ class Account:
         conn.commit()
         if self.card_number == card_number:
             del self
+
+    def income_transfer(self, card_number, transfer_funds):
+        if self.card_number == card_number:
+            self.balance = self.balance + transfer_funds
 
     def print(self, print_balance=False):
         print('')
@@ -90,26 +88,126 @@ def account_menu():
     return selected_item
 
 
-# after all tasks: insert or update, print
+def create_account(conn, cursor):
+    card_number = create_card_number()
+    pin = random.randint(1111, 9999)
+    account = Account(card_number, pin)
+    all_accounts.append(account)
+    insert = 'INSERT INTO card (number, pin, balance) VALUES (' + str(account.card_number) + ', ' + str(account.pin) + ', ' + str(account.balance) + ');'
+    cursor.execute(insert)
+    conn.commit()
+    print(all_accounts)
+    return account
 
-# create first account
-fa = Account(123456, 9876)
-fa.card_number = create_card_number()
 
-# create second account
-sa = Account(654321, 1234)
-sa.card_number = create_card_number()
+def luhn_chek(num_for_transf):
+    card_number = list(str(num_for_transf))
+    copy_card_number = list.copy(card_number)
+    for i in range(len(copy_card_number)):
+        old_value = copy_card_number[i]
+        new_value = int(old_value)
+        copy_card_number[i] = new_value
+    for index, i in enumerate(copy_card_number):
+        if index % 2 == 0:
+            i = i * 2
+        copy_card_number[index] = i
+        if copy_card_number[index] > 9:
+            copy_card_number[index] = copy_card_number[index] - 9
+    if sum(copy_card_number) % 10 > 0:
+        return False
+    else:
+        return True
 
-# income to fa 1000
-fa.income(1000)
-fa.print(True)
 
-# transfer from fa to sa 500
-fa.output(500)
-sa.income(500)
-fa.print(True)
-sa.print(True)
+def transfer_money(card_number, account):
+    num_for_transf = int(input())
+    if num_for_transf == card_number:
+        print("You can't transfer money to the same account!")
+    elif luhn_chek(num_for_transf) is False:
+        print('Probably you made a mistake in the card number. Please try again!')
+    elif luhn_chek(num_for_transf) is True:
+        cursor.execute('SELECT id FROM card WHERE number = ' + str(num_for_transf))
+        id_exists = cursor.fetchall()
+        if len(id_exists) == 0:
+            print(id_exists)
+            print('Such a card does not exist.')
+        else:
+            print(id_exists)
+            print(id_exists[0][0])
+            print('Enter how much money you want to transfer:')
+            transfer_funds = int(input())
+            if transfer_funds > account.balance:
+                print('Not enough money!')
+            else:
+                account.output(transfer_funds)
+                account.insert(conn, card_number)
+                for account in all_accounts:
+                    if account.card_number == num_for_transf:
+                        account.income_transfer(num_for_transf, transfer_funds)
+                        account.insert(conn, num_for_transf)
 
-# основной код
 conn = sqlite3.connect('card.s3db')
 cursor = conn.cursor()
+cursor.execute('DROP TABLE card')
+cursor.execute('CREATE TABLE card ( id INTEGER PRIMARY KEY AUTOINCREMENT, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)')
+conn.commit()
+
+all_accounts = []
+answer = welcome()
+
+while answer != 0:
+    if answer == 1:
+        account = create_account(conn, cursor)
+        account.print()
+        answer = welcome()
+    elif answer == 2:
+        print('Enter your card number:')
+        card_number = int(input())
+        print('Enter your PIN:')
+        pin = int(input())
+        print('')
+        for account in all_accounts:
+            if account.card_number == card_number:
+                if account.data_check(card_number, pin) is True:
+                    print('You have successfully logged in!')
+                    selected_item = account_menu()
+                    while selected_item != 0:
+                        if selected_item == 1:
+                            print(account.balance)
+                            selected_item = account_menu()
+                        elif selected_item == 2:
+                            print("Enter income:")
+                            income = int(input())
+                            account.income(income)
+                            account.insert(conn, card_number)
+                            selected_item = account_menu()
+                        elif selected_item == 3:
+                            print('Transfer')
+                            print('Enter card number:')
+                            transfer_money(card_number, account)
+                            selected_item = account_menu()
+                        elif selected_item == 4:
+                            account.delete(card_number, conn)
+                            print('The account has been closed!')
+                            print('')
+                            selected_item = 'wrong'
+                            answer = welcome()
+                            break
+                        elif selected_item == 5:
+                            print('You have successfully logged out!')
+                            print('')
+                            selected_item = 'wrong'
+                            answer = welcome()
+                            break
+                    else:
+                        answer = 0
+                        break
+                else:
+                    print('Wrong card number or PIN!')
+                    print('')
+                    answer = welcome()
+            else:
+                print('Wrong card number or PIN!')
+                print('')
+                answer = welcome()
+print('Bye!')
