@@ -9,6 +9,8 @@ In this project, you will find out how the banking system works and learn about 
 
 ## Stage 1/4: Card anatomy
 
+![card](https://user-images.githubusercontent.com/56825295/122482935-2f668480-cfda-11eb-87f9-905ea182e6d9.png)
+
  **Topics learned:**
 
 > Computer programming
